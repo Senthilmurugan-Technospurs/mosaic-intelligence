@@ -25,8 +25,10 @@ import {
 } from '@/lib/recommendationTree';
 import { getMosaicRecs, getPlatformRecs } from '@/lib/recommendationSources';
 import PlatformSpecificPanel from '@/components/recommendations/PlatformSpecificPanel';
-import { MosaicUspBadge, MosaicUspStrip } from '@/components/branding/MosaicUsp';
+import ApplyFromQueryLauncher from '@/components/recommendations/ApplyFromQueryLauncher';
+import { MosaicUspStrip } from '@/components/branding/MosaicUsp';
 import { MOSAIC_PRODUCT_NAME } from '@/lib/mosaicBranding';
+import { spurTk } from '@/lib/spurMosaicTokens';
 import {
   Alert,
   Breadcrumb,
@@ -257,7 +259,13 @@ export default function CampaignDetailPage() {
           ]}
         />
 
-        <Card className="mosaic-hero">
+        <Card
+          className="mosaic-hero"
+          style={{
+            border: `1px solid ${spurTk.border}`,
+            background: `linear-gradient(135deg, ${spurTk.surface} 0%, color-mix(in srgb, ${spurTk.accent} 6%, ${spurTk.surface}) 100%)`,
+          }}
+        >
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="flex flex-wrap items-center gap-2">
@@ -331,18 +339,18 @@ export default function CampaignDetailPage() {
 
                   {hasMosaicWorkflow && primaryForSource ? (
                     <div>
-                      <div className="mb-2 flex flex-wrap items-center gap-2">
-                        <p className="text-xs font-semibold tracking-widest text-[#5f7387]">PRIMARY ACTION</p>
-                        <MosaicUspBadge />
-                      </div>
-                      <div className="mt-2">
-                        <PrimaryRecommendationCard
+                      <p
+                        className="mb-2 text-[11px] font-bold tracking-widest"
+                        style={{ color: spurTk.muted }}
+                      >
+                        PRIMARY ACTION
+                      </p>
+                      <PrimaryRecommendationCard
                           recommendation={primaryForSource}
                           onApply={handleApply}
                           onDismiss={handleDismiss}
                           onUndo={handleUndo}
                         />
-                      </div>
                     </div>
                   ) : hasMosaicWorkflow ? null : sourceTab === 'google_ads' || sourceTab === 'meta' ? (
                     <p className="text-sm text-[#5f7387]">
@@ -468,6 +476,11 @@ export default function CampaignDetailPage() {
         selectedCount={selectedIds.size}
         onBulkApply={handleBulkApply}
         onClearSelection={() => setSelectedIds(new Set())}
+      />
+
+      <ApplyFromQueryLauncher
+        recommendations={data?.recommendations ?? []}
+        onApply={handleApply}
       />
     </div>
   );

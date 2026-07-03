@@ -12,3 +12,6 @@ export const MOSAIC_USP =
 
 export const MOSAIC_USP_SHORT =
   'AI orchestration · hierarchical actions · cross-platform compare';
+
+export const MOSAIC_EXPANSION = 'Media Optimization System with AI Control';
+export const MOSAIC_FULL = `${MOSAIC_PRODUCT_NAME} (${MOSAIC_EXPANSION})`;

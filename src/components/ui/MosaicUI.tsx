@@ -46,7 +46,7 @@ export function Btn({ variant = 'outline', size = 'md', loading, className, chil
   const base = 'inline-flex items-center justify-center gap-1.5 font-semibold rounded-full transition-colors disabled:opacity-50';
   const sizes = size === 'sm' ? 'text-xs px-3 py-1.5' : 'text-sm px-4 py-2';
   const variants = {
-    primary: 'bg-[#22c7ee] text-white hover:bg-[#0ea5c6] shadow-md shadow-cyan-500/20',
+    primary: 'bg-[#3b82f6] text-white hover:bg-[#2563eb] shadow-md shadow-blue-500/20',
     ghost: 'border border-cyan-200 text-[#0891b2] bg-cyan-50/50 hover:bg-cyan-50',
     outline: 'border border-[#dbe7ee] text-[#102131] bg-white hover:bg-slate-50',
     danger: 'border border-red-200 text-red-600 hover:bg-red-50',

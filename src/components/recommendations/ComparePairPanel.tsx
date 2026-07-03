@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Card, Empty, Pill, Segmented } from '@/components/ui/MosaicUI';
 import { useMemo, useState } from 'react';
 import { Recommendation, RecommendationSource } from '@/types/recommendation';
@@ -8,45 +9,92 @@ import {
   ALIGNMENT_LABEL,
   RecommendationComparePair,
 } from '@/lib/recommendationCompare';
-import SourceTag from './SourceTag';
+import {
+  getRecommendationApplyHref,
+  isExternalRecommendationHref,
+} from '@/lib/recommendationApplyUrl';
+import { spurTk } from '@/lib/spurMosaicTokens';
+import { PlatformSourceLabel } from '@/components/mosaic/MosaicSpurPieces';
+import ValueChangeRow from './ValueChangeRow';
 
 type CompareView = 'all' | 'mosaic' | 'google_ads' | 'meta';
 
-function MiniRecCard({ rec }: { rec: Recommendation }) {
+const CATEGORY_LABEL: Record<string, string> = {
+  budget_orchestration: 'Budget Orchestration',
+  bid_policy: 'Bid Policy',
+  audience_strategy: 'Audience Strategy',
+  placement: 'Placement',
+  geo_daypart: 'Geo & Daypart',
+};
+
+function ClickableRecTile({ rec }: { rec: Recommendation }) {
+  const href = getRecommendationApplyHref(rec);
+  const external = isExternalRecommendationHref(href);
+  const isPlatform = rec.source === 'google_ads' || rec.source === 'meta';
+
+  const body = (
+    <>
+      <p className="text-[13px] font-bold leading-snug" style={{ color: spurTk.text }}>
+        {rec.title}
+      </p>
+      <p className="mt-1.5 text-xs leading-relaxed" style={{ color: spurTk.muted }}>
+        {rec.description}
+      </p>
+      <ValueChangeRow
+        currentValue={rec.currentValue}
+        proposedValue={rec.proposedValue}
+        estimatedImpact={rec.estimatedImpact}
+      />
+      <p className="text-[11px] font-semibold" style={{ color: spurTk.accent }}>
+        {isPlatform ? 'Open in platform to apply →' : 'Review & apply →'}
+      </p>
+    </>
+  );
+
+  const className =
+    'group block w-full rounded-[10px] border bg-white p-3.5 text-left no-underline transition-all ' +
+    'hover:border-[#3b82f6]/50 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6]';
+
+  const style = {
+    borderColor: spurTk.border,
+    boxShadow: spurTk.shadowSm,
+  } as const;
+
+  if (external) {
+    return (
+      <a href={href} target="_blank" rel="noreferrer" className={className} style={style}>
+        {body}
+      </a>
+    );
+  }
+
   return (
-    <div className="rounded-xl border border-[#e2ebf0] bg-white p-4 shadow-sm">
-      <div className="space-y-2">
-        <SourceTag source={rec.source} />
-        <p className="text-sm font-semibold leading-snug text-[#102131]">{rec.title}</p>
-        <p className="text-xs leading-relaxed text-[#5f7387]">{rec.description}</p>
-        {(rec.currentValue || rec.proposedValue) && (
-          <div className="rounded-lg bg-gray-50 p-3 text-xs">
-            <div><span className="text-[#5f7387]">Current:</span> {rec.currentValue || '—'}</div>
-            <div className="mt-1"><strong>Proposed:</strong> {rec.proposedValue || '—'}</div>
-          </div>
-        )}
-        {rec.estimatedImpact && (
-          <p className="text-xs font-semibold text-emerald-600">{rec.estimatedImpact}</p>
-        )}
-        {rec.managerDeepLink && (
-          <a href={rec.managerDeepLink} target="_blank" rel="noreferrer" className="inline-block text-xs text-[#0891b2] hover:underline">
-            Open in Ads Manager →
-          </a>
-        )}
-      </div>
-    </div>
+    <Link href={href} className={className} style={style}>
+      {body}
+    </Link>
   );
 }
 
-function CompareColumn({ label, rec }: { label: string; rec?: Recommendation | null }) {
+function CompareColumn({
+  source,
+  rec,
+}: {
+  source: RecommendationSource;
+  rec?: Recommendation | null;
+}) {
   return (
     <div className="flex min-w-0 flex-col gap-2">
-      <h4 className="text-xs font-bold uppercase tracking-wide text-[#5f7387]">{label}</h4>
+      <PlatformSourceLabel source={source} iconSize={22} />
       {rec ? (
-        <MiniRecCard rec={rec} />
+        <ClickableRecTile rec={rec} />
       ) : (
-        <div className="flex min-h-[88px] items-center justify-center rounded-xl border border-dashed border-[#dbe7ee] bg-slate-50/80 px-4 py-6">
-          <span className="text-xs text-[#9ca3af]">—</span>
+        <div
+          className="flex min-h-[88px] items-center justify-center rounded-[10px] border border-dashed px-4 py-6"
+          style={{ borderColor: spurTk.border, background: `${spurTk.surface2}cc` }}
+        >
+          <span className="text-xs" style={{ color: spurTk.muted }}>
+            —
+          </span>
         </div>
       )}
     </div>
@@ -80,8 +128,10 @@ export default function ComparePairPanel({ pairs }: ComparePairPanelProps) {
       <Card className="bg-gradient-to-br from-white to-slate-50">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="font-bold text-[#102131]">Recommendation Views</h3>
-            <p className="text-xs text-[#5f7387]">
+            <h3 className="font-bold" style={{ color: spurTk.text }}>
+              Recommendation Views
+            </h3>
+            <p className="text-xs" style={{ color: spurTk.muted }}>
               Switch between the unified comparison, MOSAIC suggestions, and native platform recommendations.
             </p>
           </div>
@@ -99,7 +149,11 @@ export default function ComparePairPanel({ pairs }: ComparePairPanelProps) {
       </Card>
 
       {filteredPairs.map((pair) => (
-        <Card key={pair.id} className="overflow-hidden shadow-md">
+        <Card
+          key={pair.id}
+          className="overflow-hidden"
+          style={{ boxShadow: spurTk.shadowMd, borderColor: spurTk.border }}
+        >
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <Pill
               className="border"
@@ -111,24 +165,46 @@ export default function ComparePairPanel({ pairs }: ComparePairPanelProps) {
             >
               {ALIGNMENT_LABEL[pair.matchType]}
             </Pill>
-            <span className="text-xs capitalize text-[#5f7387]">{pair.category.replace(/_/g, ' ')}</span>
+            <span className="text-xs font-semibold" style={{ color: spurTk.text }}>
+              {CATEGORY_LABEL[pair.category] ?? pair.category.replace(/_/g, ' ')}
+            </span>
           </div>
 
-          <p className="mb-4 text-xs text-[#5f7387]">{pair.summary}</p>
+          <p className="mb-4 text-xs" style={{ color: spurTk.muted }}>
+            {pair.summary}
+          </p>
 
           {view === 'all' && (
-            <div className="rounded-xl border border-[#e2ebf0] bg-slate-50/60 p-4">
+            <div
+              className="rounded-[12px] border p-4"
+              style={{ borderColor: spurTk.border, background: `${spurTk.surface2}99` }}
+            >
               <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-3">
-                <CompareColumn label="MOSAIC" rec={pair.mosaic} />
-                <CompareColumn label="Google Ads" rec={pair.google} />
-                <CompareColumn label="Meta" rec={pair.meta} />
+                <CompareColumn source="mosaic" rec={pair.mosaic} />
+                <CompareColumn source="google_ads" rec={pair.google} />
+                <CompareColumn source="meta" rec={pair.meta} />
               </div>
             </div>
           )}
 
-          {view === 'mosaic' && pair.mosaic && <MiniRecCard rec={pair.mosaic} />}
-          {view === 'google_ads' && pair.google && <MiniRecCard rec={pair.google} />}
-          {view === 'meta' && pair.meta && <MiniRecCard rec={pair.meta} />}
+          {view === 'mosaic' && pair.mosaic && (
+            <div className="space-y-2">
+              <PlatformSourceLabel source="mosaic" iconSize={22} />
+              <ClickableRecTile rec={pair.mosaic} />
+            </div>
+          )}
+          {view === 'google_ads' && pair.google && (
+            <div className="space-y-2">
+              <PlatformSourceLabel source="google_ads" iconSize={22} />
+              <ClickableRecTile rec={pair.google} />
+            </div>
+          )}
+          {view === 'meta' && pair.meta && (
+            <div className="space-y-2">
+              <PlatformSourceLabel source="meta" iconSize={22} />
+              <ClickableRecTile rec={pair.meta} />
+            </div>
+          )}
         </Card>
       ))}
     </div>

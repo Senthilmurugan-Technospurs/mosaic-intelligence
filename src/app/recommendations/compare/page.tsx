@@ -7,7 +7,7 @@ import { useRecommendationCompare } from '@/hooks/useRecommendationCompare';
 import Link from 'next/link';
 
 export default function RecommendationComparePage() {
-  const { data, isLoading } = useRecommendationCompare();
+  const { data } = useRecommendationCompare();
   const rows = data?.rows ?? [];
 
   return (
@@ -26,7 +26,7 @@ export default function RecommendationComparePage() {
           <p className="mb-4 text-xs text-[#5f7387]">
             See where our engine agrees with Google Ads and Meta, where platforms surface something extra, and where guidance conflicts.
           </p>
-          <CompareSummaryTable data={rows} loading={isLoading} />
+          <CompareSummaryTable data={rows} />
         </Card>
 
         {data?.syncedAt && (

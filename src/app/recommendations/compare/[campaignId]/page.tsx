@@ -1,29 +1,41 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+import { useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import AppHeader from '@/components/layout/AppHeader';
-import ComparePairPanel from '@/components/recommendations/ComparePairPanel';
 import { useCampaignRecommendations } from '@/hooks/useCampaignRecommendations';
+import { getCampaignDetailSnapshot } from '@/lib/campaignDetailCache';
 import { Alert, Breadcrumb, Card, Pill, Skeleton, StatCard } from '@/components/ui/MosaicUI';
+
+const ComparePairPanel = dynamic(
+  () => import('@/components/recommendations/ComparePairPanel'),
+  { loading: () => <Skeleton rows={6} /> },
+);
 
 export default function CampaignComparePage() {
   const { campaignId } = useParams<{ campaignId: string }>();
-  const { data, isLoading, error } = useCampaignRecommendations(campaignId);
+  const snapshot = useMemo(
+    () => (campaignId ? getCampaignDetailSnapshot(campaignId) : undefined),
+    [campaignId],
+  );
+  const { data, error, isPending } = useCampaignRecommendations(campaignId);
+  const payload = data ?? snapshot;
 
-  if (isLoading) {
+  if (!payload && isPending) {
     return (
       <div className="mosaic-page">
         <AppHeader />
         <main className="mosaic-main space-y-4">
           <Skeleton rows={2} />
-          <Skeleton rows={8} />
+          <Skeleton rows={6} />
         </main>
       </div>
     );
   }
 
-  if (error || !data?.campaign) {
+  if (error || !payload?.campaign) {
     return (
       <div className="mosaic-page">
         <AppHeader />
@@ -34,7 +46,7 @@ export default function CampaignComparePage() {
     );
   }
 
-  const { campaign, comparePairs = [] } = data;
+  const { campaign, comparePairs = [] } = payload;
   const conflicts = comparePairs.filter((p) => p.matchType === 'conflict').length;
   const aligned = comparePairs.filter((p) => p.matchType === 'aligned').length;
   const mosaicCount = comparePairs.filter((p) => p.mosaic).length;
@@ -63,7 +75,7 @@ export default function CampaignComparePage() {
                 {aligned > 0 && <Pill color="green">{aligned} aligned</Pill>}
               </div>
               <p className="mt-2 text-sm text-[#5f7387]">
-                Modern side-by-side workspace for MOSAIC, Google Ads, and Meta recommendations.
+                Side-by-side MOSAIC, Google Ads, and Meta recommendations.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

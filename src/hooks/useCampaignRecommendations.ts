@@ -17,13 +17,17 @@ export function useCampaignRecommendations(campaignId: string) {
   return useQuery<CampaignDetailResponse>({
     queryKey: ['recommendations', 'campaign', campaignId],
     queryFn: async () => {
+      const snap = getCampaignDetailSnapshot(campaignId);
+      if (snap) return snap;
       const { data } = await apiClient.get(`/recommendations/campaigns/${campaignId}`);
       return data;
     },
     enabled: !!campaignId,
     initialData: snapshot,
-    placeholderData: snapshot,
-    staleTime: 60_000,
+    placeholderData: (prev) => prev ?? snapshot,
+    staleTime: snapshot ? Infinity : 60_000,
     gcTime: 5 * 60_000,
+    refetchOnMount: !snapshot,
+    refetchOnWindowFocus: false,
   });
 }

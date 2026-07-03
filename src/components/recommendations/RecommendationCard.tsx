@@ -1,15 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Btn, Card, Checkbox, Pill, Tooltip } from '@/components/ui/MosaicUI';
+import { Btn, Card, Checkbox, Tooltip } from '@/components/ui/MosaicUI';
 import { useToast } from '@/components/ui/Toast';
 import { Recommendation } from '@/types/recommendation';
-import { DATA_WINDOW_LABEL } from '@/types/generationRun';
-import RecommendationScoreBadges from './RecommendationScoreBadges';
 import CommentInput from './CommentInput';
 import UndoCountdown from './UndoCountdown';
 import ApplyConfirmModal from './ApplyConfirmModal';
-import SourceTag from './SourceTag';
+import ValueChangeRow from './ValueChangeRow';
+import { MosaicTag, MosaicScoreCompact } from '@/components/mosaic/MosaicSpurPieces';
+import { spurTk } from '@/lib/spurMosaicTokens';
+import { DATA_WINDOW_LABEL } from '@/types/generationRun';
 
 const levelLabel: Record<string, string> = {
   ad_set: 'Ad Set',
@@ -23,14 +24,6 @@ const typeLabel: Record<string, string> = {
   audience_strategy: 'Audience',
   placement: 'Placement',
   geo_daypart: 'Geo/Daypart',
-};
-
-const typeColor: Record<string, string> = {
-  budget_orchestration: 'purple',
-  bid_policy: 'blue',
-  audience_strategy: 'cyan',
-  placement: 'magenta',
-  geo_daypart: 'geekblue',
 };
 
 interface RecommendationCardProps {
@@ -113,19 +106,20 @@ export default function RecommendationCard({
     }
   };
 
-  const borderColor = isApplied ? '#10b981' : isDismissed || isRolledBack ? '#e5e7eb' : '#e0e7ff';
+  const borderColor = isApplied ? spurTk.green : isDismissed || isRolledBack ? spurTk.border : spurTk.accent;
   const nestIndent = indentLevel !== undefined ? indentLevel * 20 : indent ? 16 : 0;
 
   return (
     <>
       <Card
-        className="shadow-sm"
         padding
         style={{
           marginLeft: nestIndent,
           borderLeft: `3px solid ${borderColor}`,
-          opacity: isDismissed || isRolledBack ? 0.6 : 1,
-          backgroundColor: nestIndent > 0 ? '#fafafa' : '#fff',
+          opacity: isDismissed || isRolledBack ? 0.65 : 1,
+          background: nestIndent > 0 ? spurTk.surface2 : spurTk.surface,
+          borderColor: spurTk.border,
+          boxShadow: spurTk.shadowSm,
         } as React.CSSProperties}
       >
         <div className="flex items-start gap-3">
@@ -138,56 +132,50 @@ export default function RecommendationCard({
           </div>
 
           <div className="min-w-0 flex-1 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <SourceTag source={rec.source} />
-              <Pill color="default">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <MosaicTag color={spurTk.muted}>
                 {levelLabel[rec.level]}
                 {rec.segmentDimension ? ` · ${rec.segmentDimension}` : ''}
-              </Pill>
-              <Pill color={typeColor[rec.type]}>{typeLabel[rec.type]}</Pill>
-              <Pill color="cyan">{DATA_WINDOW_LABEL[rec.dataWindow]}</Pill>
-              {isApplied && <Pill color="green">✓ Applied</Pill>}
-              {isDismissed && <Pill color="default">Dismissed</Pill>}
-              {isRolledBack && <Pill color="red">Rolled Back</Pill>}
+              </MosaicTag>
+              <MosaicTag color={spurTk.accent}>{typeLabel[rec.type]}</MosaicTag>
+              <MosaicTag color={spurTk.muted}>{DATA_WINDOW_LABEL[rec.dataWindow]}</MosaicTag>
+              {isApplied && <MosaicTag color={spurTk.green}>Applied</MosaicTag>}
+              {isDismissed && <MosaicTag color={spurTk.muted}>Dismissed</MosaicTag>}
+              {isRolledBack && <MosaicTag color={spurTk.red}>Rolled back</MosaicTag>}
             </div>
 
             <p
-              className="text-sm font-semibold"
+              className="text-[13px] font-bold"
               style={{
                 textDecoration: isDismissed || isRolledBack ? 'line-through' : 'none',
-                color: isDismissed || isRolledBack ? '#9ca3af' : '#111827',
+                color: isDismissed || isRolledBack ? spurTk.muted : spurTk.text,
               }}
             >
               {rec.title}
             </p>
 
-            <p className="text-xs leading-relaxed text-[#5f7387]">{rec.description}</p>
+            <p className="text-xs leading-relaxed" style={{ color: spurTk.muted }}>{rec.description}</p>
 
-            {(rec.currentValue || rec.proposedValue) && (
-              <div className="flex flex-wrap gap-3 rounded bg-gray-50 p-2 text-xs">
-                <span><span className="text-[#5f7387]">Current: </span><strong className="text-[#6b7280]">{rec.currentValue}</strong></span>
-                <span className="text-indigo-600">→</span>
-                <span><span className="text-[#5f7387]">Proposed: </span><strong>{rec.proposedValue}</strong></span>
-                {rec.estimatedImpact && (
-                  <span><span className="text-[#5f7387]">Impact: </span><strong className="text-emerald-600">{rec.estimatedImpact}</strong></span>
-                )}
-              </div>
-            )}
+            <ValueChangeRow
+              currentValue={rec.currentValue}
+              proposedValue={rec.proposedValue}
+              estimatedImpact={rec.estimatedImpact}
+            />
 
-            <RecommendationScoreBadges score={rec.score} compact />
+            <MosaicScoreCompact score={rec.score} />
 
             {isPending && showComment && <CommentInput value={comment} onChange={setComment} />}
 
             {isPending && !isPlatformNative && (
               <div className="flex flex-wrap items-center gap-2">
-                <Btn size="sm" variant="primary" onClick={() => setConfirmOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/20">
+                <Btn size="sm" variant="primary" onClick={() => setConfirmOpen(true)}>
                   Apply
                 </Btn>
                 <Btn size="sm" variant="link" onClick={() => setShowComment((v) => !v)}>
                   {showComment ? 'Hide note' : '+ Add note'}
                 </Btn>
                 <Tooltip title="Dismiss">
-                  <Btn size="sm" variant="danger" loading={dismissLoading} onClick={handleDismiss}>✕</Btn>
+                  <Btn size="sm" variant="danger" loading={dismissLoading} onClick={handleDismiss}>Dismiss</Btn>
                 </Tooltip>
               </div>
             )}

@@ -2,7 +2,7 @@
 
 import { Btn, Input, Pill, Select } from '@/components/ui/MosaicUI';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   ALIGNMENT_COLOR,
   ALIGNMENT_LABEL,
@@ -21,6 +21,11 @@ export default function CompareSummaryTable({ data, loading }: CompareSummaryTab
   const [alignmentFilter, setAlignmentFilter] = useState<CompareMatchType | 'all'>('all');
   const [page, setPage] = useState(0);
   const pageSize = 15;
+
+  const prefetchCompare = useCallback(
+    (campaignId: string) => router.prefetch(`/recommendations/compare/${campaignId}`),
+    [router],
+  );
 
   const filtered = data.filter((row) => {
     const matchName = row.campaignName.toLowerCase().includes(search.toLowerCase());
@@ -77,6 +82,7 @@ export default function CompareSummaryTable({ data, loading }: CompareSummaryTab
                   <tr
                     key={row.campaignId}
                     className={`cursor-pointer ${row.alignment === 'conflict' ? 'bg-red-50' : ''}`}
+                    onMouseEnter={() => prefetchCompare(row.campaignId)}
                     onClick={() => router.push(`/recommendations/compare/${row.campaignId}`)}
                   >
                     <td>

@@ -1,32 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Btn, Card, Divider, Pill } from '@/components/ui/MosaicUI';
+import { Btn, Card } from '@/components/ui/MosaicUI';
 import { useToast } from '@/components/ui/Toast';
 import { Recommendation } from '@/types/recommendation';
-import { DATA_WINDOW_LABEL } from '@/types/generationRun';
-import RecommendationScoreBadges from './RecommendationScoreBadges';
 import CommentInput from './CommentInput';
 import UndoCountdown from './UndoCountdown';
 import ApplyConfirmModal from './ApplyConfirmModal';
-import SourceTag from './SourceTag';
-import { MosaicUspBadge } from '@/components/branding/MosaicUsp';
-
-const typeLabel: Record<string, string> = {
-  budget_orchestration: 'Budget Orchestration',
-  bid_policy: 'Bid Policy',
-  audience_strategy: 'Audience Strategy',
-  placement: 'Placement',
-  geo_daypart: 'Geo & Daypart',
-};
-
-const typeColor: Record<string, string> = {
-  budget_orchestration: 'purple',
-  bid_policy: 'blue',
-  audience_strategy: 'cyan',
-  placement: 'magenta',
-  geo_daypart: 'geekblue',
-};
+import ValueChangeRow from './ValueChangeRow';
+import { recMetaTags, MosaicScoreGrid } from '@/components/mosaic/MosaicSpurPieces';
+import { spurTk } from '@/lib/spurMosaicTokens';
 
 interface PrimaryRecommendationCardProps {
   recommendation: Recommendation;
@@ -54,6 +37,12 @@ export default function PrimaryRecommendationCard({
   const isDismissed = rec.status === 'dismissed';
   const isRolledBack = rec.status === 'rolled_back';
   const isPlatformNative = rec.source === 'google_ads' || rec.source === 'meta';
+
+  const borderCol = isApplied
+    ? spurTk.green
+    : isDismissed || isRolledBack
+      ? spurTk.border
+      : spurTk.accent;
 
   const handleConfirmApply = async () => {
     setApplyLoading(true);
@@ -93,85 +82,59 @@ export default function PrimaryRecommendationCard({
     }
   };
 
-  const borderColor = isApplied ? '#10b981' : isDismissed || isRolledBack ? '#d1d5db' : '#4f46e5';
-
   return (
     <>
       <Card
-        className="shadow-md"
         style={{
-          borderLeft: `4px solid ${borderColor}`,
-          opacity: isDismissed || isRolledBack ? 0.75 : 1,
+          borderLeft: `4px solid ${borderCol}`,
+          opacity: isDismissed || isRolledBack ? 0.8 : 1,
+          boxShadow: spurTk.shadowMd,
+          borderColor: spurTk.border,
         }}
       >
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-base font-bold text-[#102131]">{rec.title}</h3>
-            <MosaicUspBadge />
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <SourceTag source={rec.source} />
-            <Pill color="gold">★ Primary</Pill>
-            <Pill color="default">Campaign Level</Pill>
-            <Pill color={typeColor[rec.type]}>{typeLabel[rec.type]}</Pill>
-            <Pill color="cyan">{DATA_WINDOW_LABEL[rec.dataWindow]}</Pill>
-            {isApplied && <Pill color="green">✓ Applied</Pill>}
-            {isDismissed && <Pill color="default">Dismissed</Pill>}
-            {isRolledBack && <Pill color="red">Rolled Back</Pill>}
-          </div>
-        </div>
+        {recMetaTags(rec)}
+        <h4 className="mb-2 text-[15px] font-bold" style={{ color: spurTk.text }}>
+          {rec.title}
+        </h4>
+        <p className="mb-3 text-[13px] leading-relaxed" style={{ color: spurTk.text, opacity: 0.9 }}>
+          {rec.description}
+        </p>
 
-        <div className="space-y-4">
-          <p className="text-sm leading-relaxed text-[#374151]">{rec.description}</p>
-
-          <button
-            type="button"
-            onClick={() => setRationaleOpen((v) => !v)}
-            className="text-sm font-medium text-indigo-600 hover:underline"
+        <button
+          type="button"
+          onClick={() => setRationaleOpen((v) => !v)}
+          className="mb-3 text-xs font-semibold hover:underline"
+          style={{ color: spurTk.accent, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+        >
+          {rationaleOpen ? 'Hide rationale' : 'View rationale'}
+        </button>
+        {rationaleOpen && (
+          <p
+            className="mb-3 rounded-lg p-3 text-xs leading-relaxed"
+            style={{ color: spurTk.muted, background: spurTk.surface2 }}
           >
-            {rationaleOpen ? 'Hide Rationale' : 'View Rationale'}
-          </button>
-          {rationaleOpen && (
-            <p className="text-sm leading-relaxed text-[#5f7387]">{rec.rationale}</p>
-          )}
+            {rec.rationale}
+          </p>
+        )}
 
-          <Divider className="my-2" />
+        <ValueChangeRow
+          currentValue={rec.currentValue}
+          proposedValue={rec.proposedValue}
+          estimatedImpact={rec.estimatedImpact}
+        />
+        <MosaicScoreGrid score={rec.score} />
 
-          {(rec.currentValue || rec.proposedValue) && (
-            <div className="flex flex-wrap items-center gap-4 rounded-xl bg-gray-50 p-4">
-              <div>
-                <div className="text-[11px] text-[#5f7387]">CURRENT</div>
-                <div className="text-sm font-semibold text-[#6b7280]">{rec.currentValue ?? '—'}</div>
-              </div>
-              <span className="text-lg text-indigo-600">→</span>
-              <div>
-                <div className="text-[11px] text-[#5f7387]">PROPOSED</div>
-                <div className="text-sm font-semibold">{rec.proposedValue ?? '—'}</div>
-              </div>
-              {rec.estimatedImpact && (
-                <>
-                  <div className="hidden h-8 w-px bg-slate-200 sm:block" />
-                  <div>
-                    <div className="text-[11px] text-[#5f7387]">ESTIMATED IMPACT</div>
-                    <div className="text-sm font-semibold text-emerald-600">{rec.estimatedImpact}</div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          <RecommendationScoreBadges score={rec.score} />
-
-          <Divider className="my-2" />
-
+        <div className="mt-4 border-t pt-4" style={{ borderColor: spurTk.border }}>
           {isPending && !isPlatformNative && (
             <div className="space-y-3">
               <CommentInput value={comment} onChange={setComment} />
               <div className="flex flex-wrap gap-2">
-                <Btn variant="primary" onClick={() => setConfirmOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/20">
-                  Apply Recommendation
+                <Btn variant="primary" onClick={() => setConfirmOpen(true)}>
+                  Apply
                 </Btn>
-                <Btn variant="danger" loading={dismissLoading} onClick={handleDismiss}>Dismiss</Btn>
+                <Btn variant="danger" loading={dismissLoading} onClick={handleDismiss}>
+                  Dismiss
+                </Btn>
               </div>
             </div>
           )}
@@ -187,14 +150,16 @@ export default function PrimaryRecommendationCard({
           )}
 
           {isApplied && rec.appliedBy && (
-            <p className="text-xs text-[#5f7387]">
-              Applied by <strong>{rec.appliedBy}</strong>
-              {rec.comment && <> · Note: {rec.comment}</>}
+            <p className="text-[11px]" style={{ color: spurTk.muted }}>
+              Applied by <strong style={{ color: spurTk.text }}>{rec.appliedBy}</strong>
+              {rec.comment && <> · {rec.comment}</>}
             </p>
           )}
 
           {isRolledBack && (
-            <p className="text-xs text-[#5f7387]">This recommendation was rolled back.</p>
+            <p className="text-[11px]" style={{ color: spurTk.muted }}>
+              This recommendation was rolled back.
+            </p>
           )}
         </div>
       </Card>

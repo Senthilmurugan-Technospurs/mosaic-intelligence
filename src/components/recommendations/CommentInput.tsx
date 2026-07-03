@@ -14,7 +14,7 @@ export default function CommentInput({ value, onChange, placeholder }: CommentIn
       <TextArea
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder ?? 'Add a note before applying (optional)…'}
+        placeholder={placeholder ?? 'Optional note before applying (max 500 characters)'}
         rows={2}
         maxLength={500}
       />

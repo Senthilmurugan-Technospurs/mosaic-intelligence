@@ -2,8 +2,13 @@
 
 import { useState } from 'react';
 import { Recommendation } from '@/types/recommendation';
+import Link from 'next/link';
 import { platformSourceLabel } from '@/lib/recommendationSources';
-import SourceTag from './SourceTag';
+import {
+  getRecommendationApplyHref,
+  isExternalRecommendationHref,
+} from '@/lib/recommendationApplyUrl';
+import PlatformSourceIcon from '@/components/branding/PlatformSourceIcon';
 
 const mosaicModuleLabel: Record<string, string> = {
   budget_orchestration: 'Budget',
@@ -22,38 +27,46 @@ interface PlatformSpecificPanelProps {
 function PlatformRecRow({ rec }: { rec: Recommendation }) {
   const categoryLabel = rec.nativeTypeLabel ?? mosaicModuleLabel[rec.type] ?? rec.type;
   const isNativeOnly = Boolean(rec.nativeTypeLabel);
+  const href = getRecommendationApplyHref(rec);
+  const external = isExternalRecommendationHref(href);
+
+  const inner = (
+  <>
+      <div className="mb-1 flex flex-wrap items-center gap-2">
+        <PlatformSourceIcon source={rec.source ?? 'meta'} size={18} />
+        <span
+          className={`rounded px-1.5 py-0.5 text-[10px] ${
+            isNativeOnly
+              ? 'bg-slate-200/60 text-slate-500 italic'
+              : 'bg-slate-100 text-slate-500'
+          }`}
+        >
+          {categoryLabel}
+        </span>
+      </div>
+      <p className="text-xs font-medium leading-snug text-slate-600">{rec.title}</p>
+      {rec.estimatedImpact && (
+        <p className="mt-0.5 text-[10px] text-slate-400">{rec.estimatedImpact}</p>
+      )}
+      <p className="mt-1 text-[10px] font-semibold text-[#0891b2]">Open to apply →</p>
+  </>
+  );
+
+  const rowClass =
+    'block border-b border-slate-100 py-2.5 last:border-0 no-underline transition-colors hover:bg-white/80';
+
+  if (external) {
+    return (
+      <a href={href} target="_blank" rel="noreferrer" className={rowClass}>
+        {inner}
+      </a>
+    );
+  }
 
   return (
-    <div className="flex flex-wrap items-start justify-between gap-2 border-b border-slate-100 py-2.5 last:border-0">
-      <div className="min-w-0 flex-1">
-        <div className="mb-1 flex flex-wrap items-center gap-1.5">
-          <SourceTag source={rec.source} />
-          <span
-            className={`rounded px-1.5 py-0.5 text-[10px] ${
-              isNativeOnly
-                ? 'bg-slate-200/60 text-slate-500 italic'
-                : 'bg-slate-100 text-slate-500'
-            }`}
-          >
-            {categoryLabel}
-          </span>
-        </div>
-        <p className="text-xs font-medium leading-snug text-slate-600">{rec.title}</p>
-        {rec.estimatedImpact && (
-          <p className="mt-0.5 text-[10px] text-slate-400">{rec.estimatedImpact}</p>
-        )}
-      </div>
-      {rec.managerDeepLink && (
-        <a
-          href={rec.managerDeepLink}
-          target="_blank"
-          rel="noreferrer"
-          className="shrink-0 text-[10px] text-slate-400 hover:text-slate-600 hover:underline"
-        >
-          Open in {rec.source === 'google_ads' ? 'Google' : 'Meta'} →
-        </a>
-      )}
-    </div>
+    <Link href={href} className={rowClass}>
+      {inner}
+    </Link>
   );
 }
 

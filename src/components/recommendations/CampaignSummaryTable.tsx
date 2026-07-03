@@ -11,7 +11,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
 dayjs.extend(relativeTime);
-
+  
 const statusPill: Record<CampaignStatus, string> = {
   active: 'green', paused: 'orange', ended: 'red', draft: 'default',
 };
@@ -53,7 +53,10 @@ export default function CampaignSummaryTable({ data, loading, sourceByCampaign }
   const pageSize = 20;
 
   const prefetchCampaign = useCallback(
-    (campaignId: string) => router.prefetch(`/recommendations/${campaignId}`),
+    (campaignId: string) => {
+      router.prefetch(`/recommendations/${campaignId}`);
+      router.prefetch(`/recommendations/compare/${campaignId}`);
+    },
     [router],
   );
 

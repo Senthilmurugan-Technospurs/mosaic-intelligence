@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { mockCampaignDetails } from '@/mocks/campaigns';
 import { getRecommendationsForCampaign } from '@/lib/allRecommendations';
-import { buildCampaignComparePairs } from '@/lib/recommendationCompare';
-import { getAllRecommendations } from '@/lib/allRecommendations';
+import { getComparePairsForCampaign } from '@/lib/compareCache';
 
 export async function GET(
   _req: NextRequest,
@@ -14,7 +13,7 @@ export async function GET(
   }
 
   const recommendations = getRecommendationsForCampaign(params.id);
-  const comparePairs = buildCampaignComparePairs(getAllRecommendations(), params.id);
+  const comparePairs = getComparePairsForCampaign(params.id);
 
   return NextResponse.json({ campaign, recommendations, comparePairs });
 }

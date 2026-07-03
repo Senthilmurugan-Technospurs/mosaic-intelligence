@@ -1,7 +1,7 @@
 import { mockCampaignDetails } from '@/mocks/campaigns';
 import { mockHistory } from '@/mocks/history';
-import { getRecommendationsForCampaign, getAllRecommendations } from '@/lib/allRecommendations';
-import { buildCampaignComparePairs } from '@/lib/recommendationCompare';
+import { getRecommendationsForCampaign } from '@/lib/allRecommendations';
+import { getComparePairsForCampaign } from '@/lib/compareCache';
 import type { CampaignDetailResponse } from '@/hooks/useCampaignRecommendations';
 
 export function getCampaignDetailSnapshot(campaignId: string): CampaignDetailResponse | undefined {
@@ -10,7 +10,7 @@ export function getCampaignDetailSnapshot(campaignId: string): CampaignDetailRes
   return {
     campaign,
     recommendations: getRecommendationsForCampaign(campaignId),
-    comparePairs: buildCampaignComparePairs(getAllRecommendations(), campaignId),
+    comparePairs: getComparePairsForCampaign(campaignId),
   };
 }
 

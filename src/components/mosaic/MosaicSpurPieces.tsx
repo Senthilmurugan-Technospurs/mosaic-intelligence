@@ -7,6 +7,8 @@ import PlatformSourceIcon from '@/components/branding/PlatformSourceIcon';
 import { platformSourceLabel } from '@/lib/recommendationSources';
 import { MOSAIC_PRODUCT_NAME } from '@/lib/mosaicBranding';
 import { RecommendationSource } from '@/types/recommendation';
+import { Tooltip } from '@/components/ui/MosaicUI';
+import { AVG_LIFT_STATS_TOOLTIP } from '@/lib/recommendationLift';
 
 const TYPE_COL: Record<RecType, string> = {
   budget_orchestration: spurTk.violet,
@@ -150,13 +152,21 @@ const STAT_TILES: Array<{
   icon: string;
   color: string;
   suffix?: string;
+  tip?: string;
 }> = [
   { key: 'totalRecommendations', label: 'Total', icon: '📊', color: spurTk.accent },
   { key: 'appliedRecommendations', label: 'Applied', icon: '✓', color: spurTk.green },
   { key: 'dismissedRecommendations', label: 'Dismissed', icon: '✕', color: spurTk.muted },
   { key: 'ignoredRecommendations', label: 'Ignored', icon: '⏳', color: spurTk.orange },
   { key: 'pendingRecommendations', label: 'Pending', icon: '◎', color: spurTk.yellow },
-  { key: 'potentialLiftAvg', label: 'Avg lift', icon: '↗', color: spurTk.cyan, suffix: '%' },
+  {
+    key: 'potentialLiftAvg',
+    label: 'Avg lift',
+    icon: '↗',
+    color: spurTk.cyan,
+    suffix: '%',
+    tip: AVG_LIFT_STATS_TOOLTIP,
+  },
 ];
 
 export function MosaicScoreCompact({ score }: { score: RecScore }) {
@@ -215,7 +225,16 @@ export function MosaicCampaignStatsBar({ stats }: { stats: RecommendationTileSta
             {t.suffix ?? ''}
           </div>
           <div style={{ fontSize: 11, color: spurTk.muted, marginTop: 4, fontWeight: 600 }}>
-            {t.label}
+            {t.tip ? (
+              <Tooltip title={t.tip}>
+                <span className="inline-flex cursor-help items-center gap-0.5">
+                  {t.label}
+                  <span style={{ opacity: 0.65 }}>ⓘ</span>
+                </span>
+              </Tooltip>
+            ) : (
+              t.label
+            )}
           </div>
         </div>
       ))}

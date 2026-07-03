@@ -6,7 +6,9 @@ import { CampaignRecommendationSummary, CampaignStatus } from '@/types/campaign'
 import { FREQUENCY_LABEL } from '@/types/generationRun';
 import { CampaignSourceCounts, campaignHasMultiSource } from '@/lib/campaignSourceCounts';
 import { Btn, Input, Pill, Select, Tooltip } from '@/components/ui/MosaicUI';
+import AvgLiftCell from '@/components/recommendations/AvgLiftEstimateBox';
 import { MOSAIC_PRODUCT_NAME } from '@/lib/mosaicBranding';
+import { PROJECTED_LIFT_COLUMN_TOOLTIP, PROJECTED_LIFT_COLUMN_LABEL } from '@/lib/recommendationLift';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -34,11 +36,13 @@ function SourceCount({ value, color }: { value: number; color: string }) {
   );
 }
 
-function Th({ children, tip }: { children: React.ReactNode; tip?: string }) {
+function Th({ children, tip, center }: { children: React.ReactNode; tip?: string; center?: boolean }) {
   return (
-    <th>
+    <th style={center ? { textAlign: 'center' } : undefined}>
       <Tooltip title={tip ?? ''}>
-        <span className="inline-flex items-center gap-1">{children}{tip ? ' ⓘ' : ''}</span>
+        <span className={`inline-flex items-center gap-1${center ? ' w-full justify-center' : ''}`}>
+          {children}{tip ? ' ⓘ' : ''}
+        </span>
       </Tooltip>
     </th>
   );
@@ -105,7 +109,7 @@ export default function CampaignSummaryTable({ data, loading, sourceByCampaign }
           onChange={(v) => setSortField(v as 'pending' | 'lift')}
           options={[
             { label: 'Sort: pending count', value: 'pending' },
-            { label: 'Sort: avg lift', value: 'lift' },
+            { label: 'Sort: projected lift', value: 'lift' },
           ]}
           className="min-w-[180px]"
         />
@@ -124,7 +128,7 @@ export default function CampaignSummaryTable({ data, loading, sourceByCampaign }
                   <Th tip="Google Ads native suggestions">Google</Th>
                   <Th tip="Meta Ads native suggestions">Meta</Th>
                   <Th tip="Pending recommendations">Pending</Th>
-                  <th>Avg lift</th>
+                  <Th tip={PROJECTED_LIFT_COLUMN_TOOLTIP} center>{PROJECTED_LIFT_COLUMN_LABEL}</Th>
                   <th>Schedule</th>
                   <th></th>
                 </tr>
@@ -162,8 +166,11 @@ export default function CampaignSummaryTable({ data, loading, sourceByCampaign }
                       <td className="text-center font-semibold" style={{ color: record.pendingRecommendations > 0 ? '#f59e0b' : '#6b7280' }}>
                         {record.pendingRecommendations}
                       </td>
-                      <td className="font-semibold text-[#22c7ee]">
-                        {record.potentialLiftAvg > 0 ? `+${record.potentialLiftAvg}%` : '—'}
+                      <td className="text-center">
+                        <AvgLiftCell
+                          campaignId={record.campaignId}
+                          fallbackPercent={record.potentialLiftAvg}
+                        />
                       </td>
                       <td className="text-xs text-[#5f7387]">
                         <Pill color="cyan">{FREQUENCY_LABEL[record.generationFrequency]}</Pill>
